@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schema跳转测试页面</title>
+  <style>
+    body {
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 10px 0;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    a {
+      display: inline-block;
+      padding: 10px 15px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+  </style>
+</head>
+<body>
+<h2>Schema跳转测试</h2>
+
+<div>
+  <h3>1. 原生跳转方式</h3>
+  <a href="xifan://theater/home?schemeType=2&pageType=3&tubeId=102&episodeNum=1&feedJumpSource=1" target="_blank">
+    直接点击跳转（原生a标签）
+  </a>
+</div>
+
+<div>
+  <h3>2. JavaScript Bridge 跳转方式</h3>
+  <button onclick="testSchemeJump()">通过 KwaiAd Bridge 跳转</button>
+</div>
+
+<div class="result">
+  <strong>调用日志：</strong><br>
+  <div id="output">等待测试...</div>
+</div>
+
+<script>
+  // 回调函数 - 接收Java端返回的结果
+  function testCallback(result) {
+    console.log("收到回调:", result);
+    updateOutput("✅ 收到Java回调: " + result);
+  }
+
+  function updateOutput(message) {
+    const output = document.getElementById('output');
+    const time = new Date().toLocaleTimeString();
+    output.innerHTML += `[${time}] ${message}<br>`;
+  }
+
+  // Schema跳转测试函数
+  function testSchemeJump() {
+    try {
+      // 将scheme包装成JSON对象
+      const schemeData = {
+        scheme: 'xifan://theater/home?schemeType=2&pageType=16&tubeId=102&episodeNum=1&feedJumpSource=1'
+      };
+
+      // 构造完整的调用参数
+      const param = JSON.stringify({
+        action: 'openSchemePage',           // 对应Java端的处理器
+        data: JSON.stringify(schemeData),   // 数据，需要是JSON字符串格式
+        callback: 'testCallback'            // 回调函数名
+      });
+
+      updateOutput("📤 发送跳转请求...");
+      updateOutput("参数: " + param);
+
+      // 调用原生方法
+      KwaiAd.callAdBridge(param);
+
+      updateOutput("✅ 调用成功，等待处理结果");
+
+    } catch(e) {
+      updateOutput("❌ 调用失败: " + e.message);
+      console.error("Error:", e);
+    }
+  }
+
+  // 页面加载时检测接口是否可用
+  window.onload = function() {
+    if (typeof KwaiAd !== 'undefined' && typeof KwaiAd.callAdBridge === 'function') {
+      updateOutput("✅ KwaiAd Bridge 接口就绪");
+    } else {
+      updateOutput("❌ KwaiAd Bridge 接口未找到，请检查Android端配置");
+    }
+  };
+</script>
+</body>
+</html>
